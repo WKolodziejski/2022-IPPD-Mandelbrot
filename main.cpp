@@ -8,10 +8,14 @@ using std::cout;
 
 constexpr auto max_row = 100, max_column = 100, max_iteration = 100;
 
-int main() {
-    int output[max_row][max_column][3];
-    float offset_x = 2.0f;
-    float offset_y = 1.5f;
+inline int offset(int x, int y, int z) {
+    return (z * max_row * max_column) + (y * max_row) + x;
+}
+
+int main(int argc,char **argv) {
+    int *output = (int*) malloc(max_row * max_column * 3 * sizeof(int));
+    float offset_x = 1.0f;
+    float offset_y = 0.5f;
 
     #pragma omp parallel default(none) shared(output, cout, offset_x, offset_y)
     {
@@ -31,15 +35,15 @@ int main() {
                     while (abs(z) < 2 && ++i < max_iteration)
                         z = pow(z, 2) + c;
 
-                    double t = (double)i/(double)max_iteration;
+                    double t = (double) i / (double) max_iteration;
 
-                    int r = (int)(9*(1-t)*t*t*t*255);
-                    int g = (int)(15*(1-t)*(1-t)*t*t*255);
-                    int b =  (int)(8.5*(1-t)*(1-t)*(1-t)*t*255);
+                    int r = (int) (9 * (1 - t) * t * t * t * 255);
+                    int g = (int) (15 * (1 - t) * (1 - t) * t * t * 255);
+                    int b = (int) (8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255);
 
-                    output[row * max_column + column] = r;
-                    output[row][column][1] = g;
-                    output[row][column][2] = b;
+                    output[offset(row, column, 0)] = r;
+                    output[offset(row, column, 1)] = g;
+                    output[offset(row, column, 2)] = b;
                 }
             }
         }
@@ -57,12 +61,11 @@ int main() {
     fprintf(file, "%d %d\n", max_row, max_column);
     fprintf(file, "255\n");
 
-    for (auto &row: output) {
-        for (int *column: row) {
-            //std::cout << column;
-            fprintf(file, "%d\t", column[0]);
-            fprintf(file, "%d\t", column[1]);
-            fprintf(file, "%d\t", column[2]);
+    for (auto row = 0; row < max_row; ++row) {
+        for (auto column = 0; column < max_column; ++column) {
+            fprintf(file, "%d\t", output[offset(row, column, 0)]);
+            fprintf(file, "%d\t", output[offset(row, column, 1)]);
+            fprintf(file, "%d\t", output[offset(row, column, 2)]);
             fprintf(file, "\t");
         }
         fprintf(file, "\n");
