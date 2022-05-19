@@ -6,10 +6,12 @@
 using std::string;
 using std::cout;
 
-constexpr auto max_row = 30, max_column = 78, max_iteration = 255;
+constexpr auto max_row = 100, max_column = 100, max_iteration = 100;
 
 int main() {
-    u_int8_t output[max_row][max_column];
+    int output[max_row][max_column][3];
+    float offset_x = 2.0f;
+    float offset_y = 1.5f;
 
     #pragma omp parallel default(none) shared(output, cout, offset_x, offset_y)
     {
