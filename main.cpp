@@ -11,32 +11,35 @@ constexpr auto max_row = 30, max_column = 78, max_iteration = 255;
 int main() {
     u_int8_t output[max_row][max_column];
 
-    #pragma omp parallel default(none) shared(output, cout)
+    #pragma omp parallel default(none) shared(output, cout, offset_x, offset_y)
     {
         #pragma omp for
         for (auto row = 0; row < max_row; ++row) {
 
-            #pragma omp parallel default(none) shared(output, cout, row)
+            #pragma omp parallel default(none) shared(output, cout, row, offset_x, offset_y)
             {
                 #pragma omp for
                 for (auto column = 0; column < max_column; ++column) {
                     std::complex<float> z, c = {
-                            (float) column * 2.0f / max_column - 1.5f,
-                            (float) row * 2.0f / max_row - 1
+                            (float) column * offset_x / max_column - offset_y,
+                            (float) row * offset_x / max_row - (offset_y + 0.5f)
                     };
 
                     int i = 0;
                     while (abs(z) < 2 && ++i < max_iteration)
                         z = pow(z, 2) + c;
 
-                    //output[row][column] = (i == max_iteration ? '#' : '.');
-                    //output[row][column] = (i == max_iteration ? '#' : '.');
-                    output[row][column] = i;
-                    cout << i << ' ';
-                    //cout << output[row][column];
+                    double t = (double)i/(double)max_iteration;
+
+                    int r = (int)(9*(1-t)*t*t*t*255);
+                    int g = (int)(15*(1-t)*(1-t)*t*t*255);
+                    int b =  (int)(8.5*(1-t)*(1-t)*(1-t)*t*255);
+
+                    output[row][column][0] = r;
+                    output[row][column][1] = g;
+                    output[row][column][2] = b;
                 }
             }
-            cout << '\n';
         }
     }
 
@@ -48,21 +51,21 @@ int main() {
         std::cout << '\n';
     }*/
     FILE *file = fopen("test.ppm", "w");
+    fprintf(file, "P3\n");
+    fprintf(file, "%d %d\n", max_row, max_column);
+    fprintf(file, "255\n");
 
-    char* header = "P3 \n 30 78 \n 255 \n";
-    cout << std::endl << sizeof(header) << std::endl;
-    fwrite(header, sizeof(*header), 1, file);
-
-    for (auto & row : output) {
-        for (char column : row) {
+    for (auto &row: output) {
+        for (int *column: row) {
             //std::cout << column;
-            fwrite(&column, sizeof(column), 1, file);
-            fwrite(&column, sizeof(column), 1, file);
-            fwrite(&column, sizeof(column), 1, file);
+            fprintf(file, "%d\t", column[0]);
+            fprintf(file, "%d\t", column[1]);
+            fprintf(file, "%d\t", column[2]);
+            fprintf(file, "\t");
         }
-        //std::cout << '\n';
+        fprintf(file, "\n");
     }
-    //fwrite(<>, sizeof(*<>), 1, file);
+
     fclose(file);
 
     return 0;
