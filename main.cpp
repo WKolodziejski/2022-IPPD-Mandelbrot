@@ -35,7 +35,7 @@ int main() {
                     int g = (int)(15*(1-t)*(1-t)*t*t*255);
                     int b =  (int)(8.5*(1-t)*(1-t)*(1-t)*t*255);
 
-                    output[row][column][0] = r;
+                    output[row * max_column + column] = r;
                     output[row][column][1] = g;
                     output[row][column][2] = b;
                 }
