@@ -1,14 +1,15 @@
 #include <iostream>
 #include <complex>
-#include<string>
+#include <string>
+#include <omp.h>
 
 using std::string;
 using std::cout;
 
-constexpr auto max_row = 22, max_column = 78, max_iteration = 20;
+constexpr auto max_row = 30, max_column = 78, max_iteration = 255;
 
 int main() {
-    char output[max_row][max_column];
+    u_int8_t output[max_row][max_column];
 
     #pragma omp parallel default(none) shared(output, cout)
     {
@@ -28,20 +29,41 @@ int main() {
                     while (abs(z) < 2 && ++i < max_iteration)
                         z = pow(z, 2) + c;
 
-                    output[row][column] = (i == max_iteration ? '#' : '.');
-                    cout << (i == max_iteration ? '#' : '.');
+                    //output[row][column] = (i == max_iteration ? '#' : '.');
+                    //output[row][column] = (i == max_iteration ? '#' : '.');
+                    output[row][column] = i;
+                    cout << i << ' ';
+                    //cout << output[row][column];
                 }
             }
             cout << '\n';
         }
     }
 
-    for (auto & row : output) {
+
+    /*for (auto & row : output) {
         for (char column : row) {
             std::cout << column;
         }
         std::cout << '\n';
+    }*/
+    FILE *file = fopen("test.ppm", "w");
+
+    char* header = "P3 \n 30 78 \n 255 \n";
+    cout << std::endl << sizeof(header) << std::endl;
+    fwrite(header, sizeof(*header), 1, file);
+
+    for (auto & row : output) {
+        for (char column : row) {
+            //std::cout << column;
+            fwrite(&column, sizeof(column), 1, file);
+            fwrite(&column, sizeof(column), 1, file);
+            fwrite(&column, sizeof(column), 1, file);
+        }
+        //std::cout << '\n';
     }
+    //fwrite(<>, sizeof(*<>), 1, file);
+    fclose(file);
 
     return 0;
 }
