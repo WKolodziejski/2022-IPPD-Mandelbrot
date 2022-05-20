@@ -5,7 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(2022_IPPD_Mandelbrot main.cpp)
 
+find_package(MPI)
 find_package(OpenMP)
+
+include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(2022_IPPD_Mandelbrot PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(2022_IPPD_Mandelbrot PUBLIC OpenMP::OpenMP_CXX ${MPI_C_LIBRARIES})
 endif()
+
