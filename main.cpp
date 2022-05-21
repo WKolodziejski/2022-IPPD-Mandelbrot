@@ -21,11 +21,10 @@ inline int offset2(int x, int y) {
 
 void worker() {
     MPI_Status status;
-    int row, rank;
+    int row;
 
     int *output = (int *) malloc(image_size * 3 * sizeof(int));
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Recv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
     while (status.MPI_TAG == DATA_TAG) {
@@ -61,6 +60,7 @@ void worker() {
 }
 
 void leader() {
+    MPI_Status status;
     int count = 0;
     int row = 0;
     int rank;
@@ -72,7 +72,6 @@ void leader() {
     }
 
     int *output = (int *) malloc(image_size * 3 * sizeof(int));
-    MPI_Status status;
     FILE *file = fopen("mandelbrot.ppm", "w");
 
     fprintf(file, "P3\n");
