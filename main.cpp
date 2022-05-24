@@ -8,8 +8,12 @@ using std::cout;
 using std::string;
 
 int image_size = 1000, max_iteration = 100;
-float offset_x = 1.0f;
-float offset_y = 0.5f;
+float p_x1 = -1.0f;
+float p_y1 = -1.0f;
+float p_x2 =  1.0f;
+float p_y2 =  1.0f;
+/*float offset_x = 1.0f;
+float offset_y = 0.5f;*/
 int world_size;
 
 typedef enum
@@ -43,9 +47,14 @@ void worker()
             #pragma omp for
             for (auto column = 0; column < image_size; ++column)
             {
-                std::complex<float> z, c = {
+                std::complex<float> z, c = {p_x1 + ((float)column / (float) image_size) * (p_x2 - p_x1), 
+                                            p_y1 + ((float)row    / (float) image_size) * (p_y2 - p_y1)};
+                /*std::complex<float> z, c = {
                                            (float)column * offset_x / image_size - offset_y,
-                                           (float)row * offset_x / image_size - (offset_y + 0.5f)};
+                                           (float)row * offset_x / image_size - (offset_y + 0.5f)};*/
+
+                                           /*   X1 + (x / WIDTH) * (X2 - X1),
+                                                Y1 + (y / HEIGHT) * (Y2 - Y1)*/
 
                 int i = 0;
                 while (abs(z) < 2 && ++i < max_iteration)
@@ -164,10 +173,14 @@ void leader()
 
 int main(int argc, char **argv)
 {
-    image_size      = (argc < 2) ? 1000 : atoi(argv[1]);
-    max_iteration   = (argc < 3) ? 100  : atoi(argv[2]);
-    offset_x        = (argc < 4) ? 1.0f : atof(argv[3]);
-    offset_y        = (argc < 5) ? 0.5f : atof(argv[4]);
+    image_size      = (argc < 2) ? image_size       : atoi(argv[1]);
+    max_iteration   = (argc < 3) ? max_iteration    : atoi(argv[2]);
+    p_x1              = (argc < 4) ? p_x1               : atof(argv[3]);
+    p_y1              = (argc < 5) ? p_y1               : atof(argv[4]);
+    p_x2              = (argc < 6) ? p_x2               : atof(argv[5]);
+    p_y2              = (argc < 7) ? p_y2               : atof(argv[6]);
+    /*offset_x        = (argc < 4) ? 1.0f : atof(argv[3]);
+    offset_y        = (argc < 5) ? 0.5f : atof(argv[4]);*/
     
     MPI_Init(&argc, &argv);
 
