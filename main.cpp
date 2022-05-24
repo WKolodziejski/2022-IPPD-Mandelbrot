@@ -38,9 +38,9 @@ void worker() {
 
     while (status.MPI_TAG == DATA_TAG) {
         buffer[0] = row;
-#pragma omp parallel default(none) shared(buffer, output, status, row, max_iteration, image_size, p_x1, p_y1, p_x2, p_y2)
+        #pragma omp parallel default(none) shared(buffer, output, status, row, max_iteration, image_size, p_x1, p_y1, p_x2, p_y2)
         {
-#pragma omp for
+            #pragma omp for
             for (auto column = 0; column < image_size; ++column) {
                 std::complex<float> z, c = {p_x1 + ((float) column / (float) image_size) * (p_x2 - p_x1),
                                             p_y1 + ((float) row / (float) image_size) * (p_y2 - p_y1)};
@@ -185,4 +185,4 @@ int main(int argc, char **argv) {
 }
 
 // compile: mpic++ main.cpp -o main -fopenmp
-// run: mpirun --hostfile hosts -np 0 ./main
+// run: mpirun --hostfile hosts -np <numero-processos> ./main <tamanho-imagem> <max-iterations>
