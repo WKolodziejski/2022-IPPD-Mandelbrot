@@ -175,10 +175,10 @@ int main(int argc, char **argv)
 {
     image_size      = (argc < 2) ? image_size       : atoi(argv[1]);
     max_iteration   = (argc < 3) ? max_iteration    : atoi(argv[2]);
-    p_x1              = (argc < 4) ? p_x1               : atof(argv[3]);
-    p_y1              = (argc < 5) ? p_y1               : atof(argv[4]);
-    p_x2              = (argc < 6) ? p_x2               : atof(argv[5]);
-    p_y2              = (argc < 7) ? p_y2               : atof(argv[6]);
+    p_x1            = (argc < 4) ? p_x1             : atof(argv[3]);
+    p_y1            = (argc < 5) ? p_y1             : atof(argv[4]);
+    p_x2            = (argc < 6) ? p_x2             : atof(argv[5]);
+    p_y2            = (argc < 7) ? p_y2             : atof(argv[6]);
     /*offset_x        = (argc < 4) ? 1.0f : atof(argv[3]);
     offset_y        = (argc < 5) ? 0.5f : atof(argv[4]);*/
     
