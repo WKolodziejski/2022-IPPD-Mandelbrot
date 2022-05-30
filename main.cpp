@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <mpi.h>
+#include <pthread.h>
 
 using std::cout;
 using std::string;
@@ -12,8 +13,6 @@ float p_x1 = -1.0f;
 float p_y1 = -1.0f;
 float p_x2 = 1.0f;
 float p_y2 = 1.0f;
-/*float offset_x = 1.0f;
-float offset_y = 0.5f;*/
 int world_size;
 
 typedef enum {
@@ -26,7 +25,7 @@ inline int offset(int x, int y) {
     return x * 3 + y;
 }
 
-void worker() {
+void *worker(void *args) {
     MPI_Status status;
     int row;
 
@@ -37,6 +36,7 @@ void worker() {
     MPI_Recv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
     while (status.MPI_TAG == DATA_TAG) {
+        std::cout << "W << " << row << std::endl;
         buffer[0] = row;
         #pragma omp parallel default(none) shared(buffer, output, status, row, max_iteration, image_size, p_x1, p_y1, p_x2, p_y2)
         {
@@ -44,12 +44,6 @@ void worker() {
             for (auto column = 0; column < image_size; ++column) {
                 std::complex<float> z, c = {p_x1 + ((float) column / (float) image_size) * (p_x2 - p_x1),
                                             p_y1 + ((float) row / (float) image_size) * (p_y2 - p_y1)};
-                /*std::complex<float> z, c = {
-                                           (float)column * offset_x / image_size - offset_y,
-                                           (float)row * offset_x / image_size - (offset_y + 0.5f)};*/
-
-                /*   X1 + (x / WIDTH) * (X2 - X1),
-                     Y1 + (y / HEIGHT) * (Y2 - Y1)*/
 
                 int i = 0;
                 while (abs(z) < 2 && ++i < max_iteration)
@@ -70,10 +64,15 @@ void worker() {
         MPI_Recv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     }
 
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    std::cout << "worker " << rank << " finished" << std::endl;
+
     free(buffer);
 }
 
-void printRow(FILE *file, int *output) {
+inline void printRow(FILE *file, int *output) {
     for (auto column = 0; column < image_size; ++column) {
         fprintf(file, "%d\t", output[offset(column, 0)]);
         fprintf(file, "%d\t", output[offset(column, 1)]);
@@ -82,16 +81,16 @@ void printRow(FILE *file, int *output) {
     }
 }
 
-void leader() {
+void *leader(void *args) {
     MPI_Status status;
     int count = 0;
     int row = 0;
-    //int rank;
     std::map<int, int *> row_buffer;
     int received_row;
     int next_row = 0;
 
-    for (int i = 1; i < world_size; i++) {
+    for (int i = 0; i < world_size; i++) {
+        std::cout << "L >> " << row << std::endl;
         MPI_Send(&row, 1, MPI_INT, i, DATA_TAG, MPI_COMM_WORLD);
         count++;
         row++;
@@ -107,14 +106,14 @@ void leader() {
     fprintf(file, "%d %d\n", image_size, image_size);
     fprintf(file, "255\n");
 
-    //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
     do {
         MPI_Recv(&buffer[0], total_elements, MPI_INT, MPI_ANY_SOURCE, RESULT_TAG, MPI_COMM_WORLD, &status);
         received_row = buffer[0];
         count--;
 
         if (row < image_size) {
+            std::cout << "L >> " << row << std::endl;
+
             MPI_Send(&row, 1, MPI_INT, status.MPI_SOURCE, DATA_TAG, MPI_COMM_WORLD);
             row++;
             count++;
@@ -158,8 +157,6 @@ int main(int argc, char **argv) {
     p_y1 = (argc < 5) ? p_y1 : atof(argv[4]);
     p_x2 = (argc < 6) ? p_x2 : atof(argv[5]);
     p_y2 = (argc < 7) ? p_y2 : atof(argv[6]);
-    /*offset_x        = (argc < 4) ? 1.0f : atof(argv[3]);
-    offset_y        = (argc < 5) ? 0.5f : atof(argv[4]);*/
 
     MPI_Init(&argc, &argv);
 
@@ -176,13 +173,20 @@ int main(int argc, char **argv) {
            processor_name, world_rank, world_size);
 
     if (world_rank == 0) {
-        leader();
+        pthread_t *threads = (pthread_t *) malloc(2 * sizeof(pthread_t));
+        pthread_create(&threads[0], NULL, worker, NULL);
+        pthread_create(&threads[1], NULL, leader, NULL);
+
+        pthread_join(threads[0], NULL);
+        pthread_join(threads[1], NULL);
+
+        free(threads);
     } else {
-        worker();
+        worker(NULL);
     }
 
     MPI_Finalize();
 }
 
-// compile: mpic++ main.cpp -o main -fopenmp
+// compile: mpic++ main.cpp -o main -fopenmp -lpthread
 // run: mpirun --hostfile hosts -np <numero-processos> ./main <tamanho-imagem> <max-iterations>
