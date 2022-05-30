@@ -1,2 +1,2 @@
 default:
-	g++ -o main main.cpp -fopenmp
+	mpic++ main.cpp -o main -fopenmp -lpthread

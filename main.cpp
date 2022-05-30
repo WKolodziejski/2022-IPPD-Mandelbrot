@@ -70,6 +70,7 @@ void *worker(void *args) {
     std::cout << "worker " << rank << " finished" << std::endl;
 
     free(buffer);
+    return NULL;
 }
 
 inline void printRow(FILE *file, int *output) {
@@ -148,6 +149,7 @@ void *leader(void *args) {
 
     free(buffer);
     fclose(file);
+    return NULL;
 }
 
 int main(int argc, char **argv) {
