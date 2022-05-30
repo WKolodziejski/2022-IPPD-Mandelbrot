@@ -1,1 +1,0 @@
-CMakeLists.txt not found in E:\Projects\2022-IPPD-Mandelbrot Select CMakeLists.txt
